@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 
 class BrandController extends Controller
 {
+    public function __construct (Brand $brand){
+        $this->brand = $brand;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -14,19 +17,9 @@ class BrandController extends Controller
      */
     public function index()
     {
-        $brands = Brand::all();
-        return $brands;
+        return $this->brand->all();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -36,57 +29,89 @@ class BrandController extends Controller
      */
     public function store(Request $request)
     {
-        $brand = Brand::create($request->all());
+        //Verifica se a marca existe
+        $brandExists = $this->brand->where('name', $request->name)->get()->first();
 
-        return $brand;
+        if($brandExists ){
+            return response()->json(['error' => 'Brand already exists'], 422);
+        }
+
+        //Valida os campos
+        $valid = $this->brand->validBrandStoreRules($request);
+
+        if($valid){ return $valid; }
+
+        $brand = $this->brand->create($request->all());
+
+        return response()->json($brand, 201);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Brand  $brand
+     * @param  integer
      * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
-        return Brand::findOrFail($id);
+        $brand = $this->brand->find($id);
+
+        if($brand === null){
+            return response()->json(['error' => 'Brand not found'], 404);
+        }
+
+        return response()->json($brand, 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Brand  $brand
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Brand $brand)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Brand  $brand
+     * @param  integer
      * @return \Illuminate\Http\Response
      */
     public function update($id, Request $request)
     {
-        $brand = Brand::findOrFail($id);
+        //Verifica se a marca existe
+        $brand = $this->brand->find($id);
+
+        if($brand === null){
+            return response()->json(['error' => 'brand not found'], 404);
+        }
+
+        //Verifica se existe uma marca com o mesmo nome proposto na atualização
+        $brandExists = $this->brand->where('name', $request->name)->where('id', '!=', $id)->get()->first();
+
+        if($brandExists ){
+            return response()->json(['error' => "$request->name already exists"], 422);
+        }
+
+        //Valida os campos
+        $valid = $this->brand->validBrandUpdateRules($request,$id);
+
+        if($valid){ return $valid; }
+
         $brand->update($request->all());
-        return $brand;
+        return response()->json($brand, 200);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Brand  $brand
+     * @param  integer
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        $brand = Brand::findOrFail($id);
+        $brand = $this->brand->find($id);
+
+        if($brand === null){
+            return response()->json(['error' => 'brand not found'], 404);
+        }
+
         $brand->delete();
-        return $brand;
+        return response()->json($brand, 200);
     }
+
 }
