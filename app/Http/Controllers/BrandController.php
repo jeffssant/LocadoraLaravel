@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BrandController extends Controller
 {
@@ -29,19 +30,17 @@ class BrandController extends Controller
      */
     public function store(Request $request)
     {
+
         //Verifica se a marca existe
-        $brandExists = $this->brand->where('name', $request->name)->get()->first();
+        $request->validate($this->brand->rules(), $this->brand->feedback());
 
-        if($brandExists ){
-            return response()->json(['error' => 'Brand already exists'], 422);
-        }
+        $image = $request->image;
+        $image_urn =  $image->store('images', 'public');
 
-        //Valida os campos
-        $valid = $this->brand->validBrandStoreRules($request);
+        $this->brand->name = $request->name;
+        $this->brand->image = $image_urn;
+        $brand = $this->brand->save();
 
-        if($valid){ return $valid; }
-
-        $brand = $this->brand->create($request->all());
 
         return response()->json($brand, 201);
     }
@@ -71,28 +70,32 @@ class BrandController extends Controller
      * @param  integer
      * @return \Illuminate\Http\Response
      */
-    public function update($id, Request $request)
-    {
+    public function update($id, Request $request)    {
+
         //Verifica se a marca existe
         $brand = $this->brand->find($id);
+
 
         if($brand === null){
             return response()->json(['error' => 'brand not found'], 404);
         }
 
-        //Verifica se existe uma marca com o mesmo nome proposto na atualização
-        $brandExists = $this->brand->where('name', $request->name)->where('id', '!=', $id)->get()->first();
+        $this->brand->verifyPacth($request, $id);
 
-        if($brandExists ){
-            return response()->json(['error' => "$request->name already exists"], 422);
+        if($request->image){
+            $image = $request->image;
+            $image_urn =  $image->store('images', 'public');
+
+            Storage::disk('public')->delete($brand->image);
+
+            $brand->image = $image_urn;
         }
 
-        //Valida os campos
-        $valid = $this->brand->validBrandUpdateRules($request,$id);
+        if($request->name){
+            $brand->name = $request->name;
+        }
 
-        if($valid){ return $valid; }
-
-        $brand->update($request->all());
+        $brand->update();
         return response()->json($brand, 200);
     }
 
@@ -109,6 +112,11 @@ class BrandController extends Controller
         if($brand === null){
             return response()->json(['error' => 'brand not found'], 404);
         }
+
+        if($brand->image){
+            Storage::disk('public')->delete($brand->image);
+        }
+
 
         $brand->delete();
         return response()->json($brand, 200);

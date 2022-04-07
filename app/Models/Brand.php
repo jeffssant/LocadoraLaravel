@@ -10,28 +10,43 @@ class Brand extends Model
     use HasFactory;
     protected $fillable = ['image', 'name'];
 
-    public function validBrandUpdateRules ($request, $id){
+    public function rules() {
+        return [
+            'name' => 'required|unique:brands,name,'.$this->id.'|min:3',
+            'image' => 'required|file|mimes:png'
+        ];
 
-        if(array_key_exists('name', $request->all()) and $request->name === null){
-            return response()->json(['error' => 'Name is required'], 422);
-        }
-
-        if(array_key_exists('image', $request->all()) and $request->image === null){
-            return response()->json(['error' => 'Image is required'], 422);
-        }
-
-        return false;
 
     }
 
-    public function validBrandStoreRules($request){
+    public function feedback() {
+        return [
+            'required' => 'O campo :attribute é obrigatório',
+            'image.mimes' => 'O arquivo deve ser uma imagem do tipo PNG',
+            'name.unique' => 'O nome da marca já existe',
+            'name.min' => 'O nome deve ter no mínimo 3 caracteres'
+        ];
+    }
 
-        if($request->name === null or $request->image === null){
-            return response()->json(['error' => 'Name and image are required'], 422);
+    public function verifyPacth($request, $id) {
+        $this->id = $id;
+        if($request->method() === 'PATCH') {
+
+            $dinamicRules = array();
+
+            //percorrendo todas as regras definidas no Model
+            foreach($this->rules() as $input => $rule) {
+                //coletar apenas as rules aplicáveis aos parâmetros parciais da requisição PATCH
+                if(array_key_exists($input, $request->all())) {
+                    $dinamicRules [$input] = $rule;
+                }
+            }
+
+            $request->validate($dinamicRules , $this->feedback());
+
+        } else {
+            $request->validate($this->rules(), $this->feedback());
         }
-
-        return false;
-
     }
 
 }
