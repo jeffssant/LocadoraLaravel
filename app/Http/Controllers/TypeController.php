@@ -4,17 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Type;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TypeController extends Controller
 {
+    public function __construct (Type $type){
+        $this->type = $type;
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $types = array();
+
+        if($request->has('atributes')){
+            $atributes = $request->atributes;
+            $types = $this->type->selectRaw($atributes)->with('brand')->get();
+        }
+        else{
+            $types = $this->type->with('brand')->get();
+        }
+
+
+        return response()->json($types,200);
     }
 
     /**
@@ -35,7 +50,24 @@ class TypeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+         //Verifica se a marca existe
+         $request->validate($this->type->rules());
+
+         $image = $request->image;
+         $image_urn =  $image->store('images/types', 'public');
+
+         $this->type->name = $request->name;
+         $this->type->brand_id = $request->brand_id;
+         $this->type->doors = $request->doors;
+         $this->type->seats = $request->seats;
+         $this->type->air_bag = $request->air_bag;
+         $this->type->abs = $request->abs;
+         $this->type->image = $image_urn;
+
+         $type = $this->type->save();
+
+
+         return response()->json($type, 201);
     }
 
     /**
@@ -44,9 +76,16 @@ class TypeController extends Controller
      * @param  \App\Models\Type  $type
      * @return \Illuminate\Http\Response
      */
-    public function show(Type $type)
+    public function show($id)
     {
-        //
+
+        $type = $this->type->with('brand')->find($id);
+
+        if($type === null){
+            return response()->json(['error' => 'Model not found'], 404);
+        }
+
+        return response()->json($type, 200);
     }
 
     /**
@@ -67,9 +106,32 @@ class TypeController extends Controller
      * @param  \App\Models\Type  $type
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Type $type)
+    public function update($id, Request $request)
     {
-        //
+        //Verifica se a marca existe
+        $type = $this->type->find($id);
+        $oldImage = $type->image;
+
+
+        if($type === null){
+            return response()->json(['error' => 'Model not found'], 404);
+        }
+
+        $this->type->verifyPacth($request, $id);
+
+        $type->fill($request->all());
+
+        if($request->image){
+            $image = $request->image;
+            $image_urn =  $image->store('images/types', 'public');
+
+            Storage::disk('public')->delete($oldImage);
+
+            $type->image = $image_urn;
+        }
+
+        $type->save();
+        return response()->json($type, 200);
     }
 
     /**
@@ -78,8 +140,20 @@ class TypeController extends Controller
      * @param  \App\Models\Type  $type
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Type $type)
+    public function destroy($id)
     {
-        //
+        $type = $this->type->find($id);
+
+        if($type === null){
+            return response()->json(['error' => 'Model not found'], 404);
+        }
+
+        if($type->image){
+            Storage::disk('public')->delete($type->image);
+        }
+
+
+        $type->delete();
+        return response()->json($type, 200);
     }
 }
