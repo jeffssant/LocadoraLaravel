@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Type;
+use App\Repositories\TypeRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,18 +19,24 @@ class TypeController extends Controller
      */
     public function index(Request $request)
     {
-        $types = array();
+        $typeRepository = new typeRepository($this->type);
 
-        if($request->has('atributes')){
-            $atributes = $request->atributes;
-            $types = $this->type->selectRaw($atributes)->with('brand')->get();
+        if($request->has('brand_atributes')) {
+            $type_atributes = 'brand:id,'.$request->brand_atributes;
+            $typeRepository->selectRelationship($type_atributes);
+        } else {
+            $typeRepository->selectRelationship('brand');
         }
-        else{
-            $types = $this->type->with('brand')->get();
+
+        if($request->has('filter')) {
+            $typeRepository->filter($request->filter);
         }
 
+        if($request->has('atributes')) {
+            $typeRepository->selectAtributes($request->atributes);
+        }
 
-        return response()->json($types,200);
+        return response()->json($typeRepository->getResult(), 200);
     }
 
     /**

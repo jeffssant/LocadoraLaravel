@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
+use App\Repositories\BrandRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,9 +17,27 @@ class BrandController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json($this->brand->with('types')->get(),200);
+
+        $brandRepository = new BrandRepository($this->brand);
+
+        if($request->has('type_atributes')) {
+            $type_atributes = 'types:id,brand_id,'.$request->type_atributes;
+            $brandRepository->selectRelationship($type_atributes);
+        } else {
+            $brandRepository->selectRelationship('types');
+        }
+
+        if($request->has('filter')) {
+            $brandRepository->filter($request->filter);
+        }
+
+        if($request->has('atributes')) {
+            $brandRepository->selectAtributes($request->atributes);
+        }
+
+        return response()->json($brandRepository->getResult(), 200);
     }
 
 
