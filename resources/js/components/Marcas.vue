@@ -32,7 +32,7 @@
                 <card-component titulo="Relação de marcas">
                     <template v-slot:conteudo>
                         <table-component
-                            :dados="marcas"
+                            :dados="marcas.data"
                             :titulos="{
                                 id: 'Id',
                                 name: 'Nome',
@@ -43,6 +43,16 @@
                     </template>
 
                     <template v-slot:rodape>
+                        <div class="col-10">
+                    <paginate-component>
+                        <li v-for="l, key in marcas.links" :key="key"
+                            :class="l.active ? 'page-item active' : 'page-item'"
+                            @click="paginacao(l)">
+
+                            <a class="page-link" v-html="l.label"></a>
+                        </li>
+                    </paginate-component>
+                </div>
                         <button type="button" class="btn btn-primary btn-sm float-right" data-toggle="modal" data-target="#modalMarca">Adicionar</button>
                     </template>
                 </card-component>
@@ -82,7 +92,9 @@
 </template>
 
 <script>
+    import Paginate from './Paginate.vue'
     export default {
+        components: { Paginate },
         data() {
             return {
                 urlBase: 'http://localhost:8000/api/marca',
@@ -90,12 +102,18 @@
                 arquivoImagem: [],
                 transacaoStatus: '',
                 transacaoDetalhes: {},
-                marcas: [],
+                marcas:{data: []},
 
                 token: document.cookie.split('; ').find(row => row.includes('token=')).split('=')[1]
             }
         },
         methods: {
+            paginacao(l) {
+                if(l.url) {
+                    this.urlBase = l.url //ajustando a url de consulta com o parâmetro de página
+                    this.carregarLista() //requisitando novamente os dados para nossa API
+                }
+            },
             carregarLista() {
                 let config = {
                     headers: {
@@ -106,7 +124,7 @@
                 axios.get(this.urlBase,config)
                     .then(response => {
                         this.marcas = response.data
-                        console.log(this.marcas)
+
                     })
                     .catch(errors => {
                         console.log(errors)
@@ -137,7 +155,7 @@
                             mensagem:'Marca registrada com sucesso - id ='+response.data.id
                         };
 
-                        console.log(response)
+
                     })
                     .catch(errors => {
                         this.transacaoStatus = 'erro';

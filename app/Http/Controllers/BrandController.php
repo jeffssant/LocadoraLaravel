@@ -37,7 +37,7 @@ class BrandController extends Controller
             $brandRepository->selectAtributes($request->atributes);
         }
 
-        return response()->json($brandRepository->getResult(), 200);
+        return response()->json($brandRepository->getPaginateResult(3), 200);
     }
 
 
