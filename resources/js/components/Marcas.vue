@@ -5,10 +5,8 @@
 
 
                 <!-- início do card de busca -->
-                <div class="card mb-3">
-                    <div class="card-header">Busca de marcas</div>
-
-                    <div class="card-body">
+                <card-component titulo="Busca de marcas">
+                    <template v-slot:conteudo>
                         <div class="form-row">
                             <div class="col mb-3">
                                 <input-container-component titulo="ID" id="inputId" id-help="idHelp" texto-ajuda="Opcional. Informe o ID da marca">
@@ -21,62 +19,93 @@
                                 </input-container-component>
                             </div>
                         </div>
+                    </template>
 
-                    </div>
-
-                    <div class="card-footer">
+                    <template v-slot:rodape>
                         <button type="submit" class="btn btn-primary btn-sm float-right">Pesquisar</button>
-                    </div>
-                </div>
+                    </template>
+                </card-component>
                 <!-- fim do card de busca -->
 
 
                 <!-- início do card de listagem de marcas -->
-                <div class="card">
-                    <div class="card-header">Relação de marcas</div>
+                <card-component titulo="Relação de marcas">
+                    <template v-slot:conteudo>
+                        <table-component></table-component>
+                    </template>
 
-                    <div class="card-body">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">First</th>
-                                <th scope="col">Last</th>
-                                <th scope="col">Handle</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                <th scope="row">1</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                                </tr>
-                                <tr>
-                                <th scope="row">2</th>
-                                <td>Jacob</td>
-                                <td>Thornton</td>
-                                <td>@fat</td>
-                                </tr>
-                                <tr>
-                                <th scope="row">3</th>
-                                <td colspan="2">Larry the Bird</td>
-                                <td>@twitter</td>
-                                </tr>
-                            </tbody>
-                            </table>
-                    </div>
+                    <template v-slot:rodape>
+                        <button type="button" class="btn btn-primary btn-sm float-right" data-bs-toggle="modal" data-bs-target="#modalMarca">Adicionar</button>
 
-                    <div class="card-footer">
-                        <button type="button" class="btn btn-primary btn-sm float-right">Adicionar</button>
-                    </div>
-                </div>
+                    </template>
+                </card-component>
                 <!-- fim do card de listagem de marcas -->
             </div>
         </div>
+
+        <modal-component id="modalMarca" titulo="Adicionar marca">
+            <template v-slot:conteudo>
+                 <div class="form-group">
+                    <input-container-component titulo="Nome da marca" id="novoNome" id-help="novoNomeHelp" texto-ajuda="Informe o nome da marca">
+                        <input type="text" class="form-control" id="novoNome" aria-describedby="novoNomeHelp" placeholder="Nome da marca" v-model="nomeMarca">
+                    </input-container-component>
+                    {{ nomeMarca }}
+                </div>
+
+                <div class="form-group">
+                    <input-container-component titulo="Imagem" id="novoImagem" id-help="novoImagemHelp" texto-ajuda="Selecione uma imagem no formato PNG">
+                        <input type="file" class="form-control-file" id="novoImagem" aria-describedby="novoImagemHelp" placeholder="Selecione uma imagem" @change="carregarImagem($event)">
+                    </input-container-component>
+                    {{ arquivoImagem }}
+                </div>
+            </template>
+
+            <template v-slot:rodape>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" @click="salvar()">Salvar</button>
+            </template>
+        </modal-component>
+
     </div>
 </template>
 
 <script>
+    export default {
+        data() {
+            return {
+                urlBase: 'http://localhost:8000/api/marca',
+                nomeMarca: '',
+                arquivoImagem: [],
+                token: document.cookie.split('; ').find(row => row.includes('token=')).split('=')[1]
+            }
+        },
+        methods: {
+            carregarImagem(e) {
+                this.arquivoImagem = e.target.files
+            },
+            salvar() {
+                console.log(this.nomeMarca, this.arquivoImagem[0])
 
+                let formData = new FormData();
+                formData.append('name', this.nomeMarca)
+                formData.append('image', this.arquivoImagem[0])
+
+                let config = {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + this.token
+                    }
+                }
+
+                axios.post(this.urlBase, formData, config)
+                    .then(response => {
+                        console.log(response)
+                    })
+                    .catch(errors => {
+                        console.log(errors)
+                    })
+            }
+        }
+    }
 </script>
