@@ -44,10 +44,15 @@
         </div>
 
         <modal-component id="modalMarca" titulo="Adicionar marca">
+              <template v-slot:alertas>
+                <alert-component tipo="success" :detalhes="transacaoDetalhes" titulo="Marca cadastrada com sucesso" v-if="transacaoStatus == 'adicionado'"></alert-component>
+                <alert-component tipo="danger" :detalhes="transacaoDetalhes" titulo="Erro ao tentar cadastrar marca" v-if="transacaoStatus == 'erro'"></alert-component>
+            </template>
+
             <template v-slot:conteudo>
                  <div class="form-group">
                     <input-container-component titulo="Nome da marca" id="novoNome" id-help="novoNomeHelp" texto-ajuda="Informe o nome da marca">
-                        <input type="text" class="form-control" id="novoNome" aria-describedby="novoNomeHelp" placeholder="Nome da marca" v-model="nomeMarca">
+                    <input type="text" class="form-control" id="novoNome" aria-describedby="novoNomeHelp" placeholder="Nome da marca" v-model="nomeMarca">
                     </input-container-component>
                     {{ nomeMarca }}
                 </div>
@@ -76,6 +81,9 @@
                 urlBase: 'http://localhost:8000/api/marca',
                 nomeMarca: '',
                 arquivoImagem: [],
+                transacaoStatus: '',
+                transacaoDetalhes: [],
+
                 token: document.cookie.split('; ').find(row => row.includes('token=')).split('=')[1]
             }
         },
@@ -100,10 +108,14 @@
 
                 axios.post(this.urlBase, formData, config)
                     .then(response => {
+                        this.transacaoStatus = 'adicionado';
+                        this.transacaoDetalhes = response;
+
                         console.log(response)
                     })
                     .catch(errors => {
-                        console.log(errors)
+                        this.transacaoStatus = 'erro';
+                        this.transacaoDetalhes = errors.response;
                     })
             }
         }
