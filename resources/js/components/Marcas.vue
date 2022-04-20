@@ -82,7 +82,7 @@
                 nomeMarca: '',
                 arquivoImagem: [],
                 transacaoStatus: '',
-                transacaoDetalhes: [],
+                transacaoDetalhes: {},
 
                 token: document.cookie.split('; ').find(row => row.includes('token=')).split('=')[1]
             }
@@ -109,13 +109,18 @@
                 axios.post(this.urlBase, formData, config)
                     .then(response => {
                         this.transacaoStatus = 'adicionado';
-                        this.transacaoDetalhes = response;
+                        this.transacaoDetalhes = {
+                            mensagem:'Marca registrada com sucesso - id ='+response.data.id
+                        };
 
                         console.log(response)
                     })
                     .catch(errors => {
                         this.transacaoStatus = 'erro';
-                        this.transacaoDetalhes = errors.response;
+                        this.transacaoDetalhes = {
+                            mensagem:errors.response.data.message,
+                            dados: errors.response.data.errors
+                        };
                     })
             }
         }
