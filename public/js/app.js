@@ -5597,6 +5597,13 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
     return {
@@ -5605,17 +5612,34 @@ __webpack_require__.r(__webpack_exports__);
       arquivoImagem: [],
       transacaoStatus: '',
       transacaoDetalhes: {},
+      marcas: [],
       token: document.cookie.split('; ').find(function (row) {
         return row.includes('token=');
       }).split('=')[1]
     };
   },
   methods: {
+    carregarLista: function carregarLista() {
+      var _this = this;
+
+      var config = {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ' + this.token
+        }
+      };
+      axios.get(this.urlBase, config).then(function (response) {
+        _this.marcas = response.data;
+        console.log(_this.marcas);
+      })["catch"](function (errors) {
+        console.log(errors);
+      });
+    },
     carregarImagem: function carregarImagem(e) {
       this.arquivoImagem = e.target.files;
     },
     salvar: function salvar() {
-      var _this = this;
+      var _this2 = this;
 
       console.log(this.nomeMarca, this.arquivoImagem[0]);
       var formData = new FormData();
@@ -5629,19 +5653,22 @@ __webpack_require__.r(__webpack_exports__);
         }
       };
       axios.post(this.urlBase, formData, config).then(function (response) {
-        _this.transacaoStatus = 'adicionado';
-        _this.transacaoDetalhes = {
+        _this2.transacaoStatus = 'adicionado';
+        _this2.transacaoDetalhes = {
           mensagem: 'Marca registrada com sucesso - id =' + response.data.id
         };
         console.log(response);
       })["catch"](function (errors) {
-        _this.transacaoStatus = 'erro';
-        _this.transacaoDetalhes = {
+        _this2.transacaoStatus = 'erro';
+        _this2.transacaoDetalhes = {
           mensagem: errors.response.data.message,
           dados: errors.response.data.errors
         };
       });
     }
+  },
+  mounted: function mounted() {
+    this.carregarLista();
   }
 });
 
@@ -5728,30 +5755,9 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  props: ['dados', 'titulos', 'atualizar', 'visualizar', 'remover'],
-  methods: {
-    setStore: function setStore(obj) {
-      this.$store.state.transacao.status = '';
-      this.$store.state.transacao.mensagem = '';
-      this.$store.state.transacao.dados = '';
-      this.$store.state.item = obj;
-    }
-  },
-  computed: {
-    dadosFiltrados: function dadosFiltrados() {
-      var campos = Object.keys(this.titulos);
-      var dadosFiltrados = [];
-      this.dados.map(function (item, chave) {
-        var itemFiltrado = {};
-        campos.forEach(function (campo) {
-          itemFiltrado[campo] = item[campo]; //utilizar a sintaxe de array para atribuir valores a objetos
-        });
-        dadosFiltrados.push(itemFiltrado);
-      });
-      return dadosFiltrados; //retorne um array de objetos
-    }
-  }
+  props: ['dados', 'titulos']
 });
 
 /***/ }),
@@ -29464,7 +29470,19 @@ var render = function () {
                 {
                   key: "conteudo",
                   fn: function () {
-                    return [_c("table-component")]
+                    return [
+                      _c("table-component", {
+                        attrs: {
+                          dados: _vm.marcas,
+                          titulos: {
+                            id: "Id",
+                            name: "Nome",
+                            image: "Imagem",
+                            created_at: "data de criação",
+                          },
+                        },
+                      }),
+                    ]
                   },
                   proxy: true,
                 },
@@ -29478,8 +29496,8 @@ var render = function () {
                           staticClass: "btn btn-primary btn-sm float-right",
                           attrs: {
                             type: "button",
-                            "data-bs-toggle": "modal",
-                            "data-bs-target": "#modalMarca",
+                            "data-toggle": "modal",
+                            "data-target": "#modalMarca",
                           },
                         },
                         [_vm._v("Adicionar")]
@@ -29764,16 +29782,68 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _c("div", [
+    _c("table", { staticClass: "table table-hover" }, [
+      _c("thead", [
+        _c(
+          "tr",
+          _vm._l(_vm.titulos, function (t, key) {
+            return _c(
+              "th",
+              {
+                key: key,
+                staticClass: "text-uppercase",
+                attrs: { scope: "col" },
+              },
+              [_vm._v(_vm._s(t))]
+            )
+          }),
+          0
+        ),
+      ]),
+      _vm._v(" "),
+      _c(
+        "tbody",
+        _vm._l(_vm.dados, function (obj) {
+          return _c(
+            "tr",
+            { key: obj.id },
+            [
+              _vm._l(obj, function (valor, chave) {
+                return [
+                  Object.keys(_vm.titulos).includes(chave)
+                    ? _c("td", { key: chave }, [
+                        chave == "image"
+                          ? _c("span", [
+                              _c("img", {
+                                attrs: {
+                                  src: "/storage/" + valor,
+                                  width: "30",
+                                  height: "30",
+                                },
+                              }),
+                            ])
+                          : _c("span", [
+                              _vm._v(
+                                "\n                            " +
+                                  _vm._s(valor) +
+                                  "\n                        "
+                              ),
+                            ]),
+                      ])
+                    : _vm._e(),
+                ]
+              }),
+            ],
+            2
+          )
+        }),
+        0
+      ),
+    ]),
+  ])
 }
-var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", [_c("table", { staticClass: "table table-hover" })])
-  },
-]
+var staticRenderFns = []
 render._withStripped = true
 
 

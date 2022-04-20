@@ -28,15 +28,22 @@
                 <!-- fim do card de busca -->
 
 
-                <!-- início do card de listagem de marcas -->
+               <!-- início do card de listagem de marcas -->
                 <card-component titulo="Relação de marcas">
                     <template v-slot:conteudo>
-                        <table-component></table-component>
+                        <table-component
+                            :dados="marcas"
+                            :titulos="{
+                                id: 'Id',
+                                name: 'Nome',
+                                image: 'Imagem',
+                                created_at: 'data de criação'
+                            }"
+                        ></table-component>
                     </template>
 
                     <template v-slot:rodape>
-                        <button type="button" class="btn btn-primary btn-sm float-right" data-bs-toggle="modal" data-bs-target="#modalMarca">Adicionar</button>
-
+                        <button type="button" class="btn btn-primary btn-sm float-right" data-toggle="modal" data-target="#modalMarca">Adicionar</button>
                     </template>
                 </card-component>
                 <!-- fim do card de listagem de marcas -->
@@ -83,11 +90,28 @@
                 arquivoImagem: [],
                 transacaoStatus: '',
                 transacaoDetalhes: {},
+                marcas: [],
 
                 token: document.cookie.split('; ').find(row => row.includes('token=')).split('=')[1]
             }
         },
         methods: {
+            carregarLista() {
+                let config = {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + this.token
+                    }
+                }
+                axios.get(this.urlBase,config)
+                    .then(response => {
+                        this.marcas = response.data
+                        console.log(this.marcas)
+                    })
+                    .catch(errors => {
+                        console.log(errors)
+                    })
+            },
             carregarImagem(e) {
                 this.arquivoImagem = e.target.files
             },
@@ -123,6 +147,9 @@
                         };
                     })
             }
+        },
+        mounted() {
+            this.carregarLista()
         }
     }
 </script>
