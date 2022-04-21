@@ -5624,11 +5624,17 @@ __webpack_require__.r(__webpack_exports__);
     return {
       urlBase: 'http://localhost:8000/api/marca',
       nomeMarca: '',
+      urlPaginacao: '',
+      urlFiltro: '',
       arquivoImagem: [],
       transacaoStatus: '',
       transacaoDetalhes: {},
       marcas: {
         data: []
+      },
+      busca: {
+        id: '',
+        name: ''
       },
       token: document.cookie.split('; ').find(function (row) {
         return row.includes('token=');
@@ -5636,6 +5642,31 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
+    pesquisar: function pesquisar() {
+      //console.log(this.busca)
+      var filtro = '';
+
+      for (var chave in this.busca) {
+        if (this.busca[chave]) {
+          //console.log(chave, this.busca[chave])
+          if (filtro != '') {
+            filtro += ";";
+          }
+
+          filtro += chave + ':like:' + this.busca[chave];
+        }
+      }
+
+      if (filtro != '') {
+        this.urlPaginacao = 'page=1';
+        this.urlFiltro = '&filter=' + filtro;
+      } else {
+        this.urlFiltro = '';
+      }
+
+      console.log(this.urlFiltro);
+      this.carregarLista();
+    },
     paginacao: function paginacao(l) {
       if (l.url) {
         this.urlBase = l.url; //ajustando a url de consulta com o parâmetro de página
@@ -5652,7 +5683,8 @@ __webpack_require__.r(__webpack_exports__);
           'Authorization': 'Bearer ' + this.token
         }
       };
-      axios.get(this.urlBase, config).then(function (response) {
+      var url = this.urlBase + '?' + this.urlPaginacao + this.urlFiltro;
+      axios.get(url, config).then(function (response) {
         _this.marcas = response.data;
       })["catch"](function (errors) {
         console.log(errors);
@@ -29514,12 +29546,33 @@ var render = function () {
                               },
                               [
                                 _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.busca.id,
+                                      expression: "busca.id",
+                                    },
+                                  ],
                                   staticClass: "form-control",
                                   attrs: {
                                     type: "number",
                                     id: "inputId",
                                     "aria-describedby": "idHelp",
                                     placeholder: "ID",
+                                  },
+                                  domProps: { value: _vm.busca.id },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.busca,
+                                        "id",
+                                        $event.target.value
+                                      )
+                                    },
                                   },
                                 }),
                               ]
@@ -29545,12 +29598,33 @@ var render = function () {
                               },
                               [
                                 _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.busca.name,
+                                      expression: "busca.name",
+                                    },
+                                  ],
                                   staticClass: "form-control",
                                   attrs: {
                                     type: "text",
                                     id: "inputNome",
                                     "aria-describedby": "nomeHelp",
                                     placeholder: "Nome da marca",
+                                  },
+                                  domProps: { value: _vm.busca.name },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.busca,
+                                        "name",
+                                        $event.target.value
+                                      )
+                                    },
                                   },
                                 }),
                               ]
@@ -29572,6 +29646,11 @@ var render = function () {
                         {
                           staticClass: "btn btn-primary btn-sm float-right",
                           attrs: { type: "submit" },
+                          on: {
+                            click: function ($event) {
+                              return _vm.pesquisar()
+                            },
+                          },
                         },
                         [_vm._v("Pesquisar")]
                       ),
